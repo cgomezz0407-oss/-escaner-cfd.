@@ -1,1 +1,46 @@
+name: Escaner CFD en la nube
 
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '2-57/5 * * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: escaner-cfd-nube
+  cancel-in-progress: false
+
+jobs:
+  revisar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Recuperar registro de avisos
+        uses: actions/cache/restore@v4
+        with:
+          path: estado_nube.json
+          key: cfd-nube-v3-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: cfd-nube-v3-
+
+      - name: Instalar dependencias
+        run: python -m pip install yfinance pandas exchange_calendars certifi curl_cffi
+
+      - name: Buscar posibles oportunidades
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+        run: python escaner.py
+
+      - name: Conservar registro de avisos
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: estado_nube.json
+          key: cfd-nube-v3-${{ github.run_id }}-${{ github.run_attempt }}
