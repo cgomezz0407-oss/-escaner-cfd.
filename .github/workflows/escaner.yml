@@ -3,7 +3,7 @@ name: Escaner CFD en la nube
 on:
   workflow_dispatch:
   schedule:
-    - cron:     - cron: '*/5 * * * *'
+    - cron: "*/5 * * * *"
 
 permissions:
   contents: read
