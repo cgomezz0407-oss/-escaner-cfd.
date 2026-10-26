@@ -1,0 +1,37 @@
+name: Probar aviso al movil
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  aviso:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enviar notificacion de prueba
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+        run: |
+          python3 - <<'PY'
+          import os
+          import re
+          import urllib.request
+
+          topic = os.environ.get("NTFY_TOPIC", "").strip()
+          if not re.fullmatch(r"[A-Za-z0-9_-]{1,64}", topic):
+              raise SystemExit("Revisa el secreto NTFY_TOPIC.")
+
+          request = urllib.request.Request(
+              "https://ntfy.sh/" + topic,
+              data=b"Prueba correcta. Esto NO es una senal de trading.",
+              headers={"Title": "Escaner CFD - Prueba"},
+              method="POST",
+          )
+          try:
+              with urllib.request.urlopen(request, timeout=20):
+                  pass
+          except Exception:
+              raise SystemExit("No se pudo enviar el aviso.")
+          print("Aviso enviado.")
+          PY
